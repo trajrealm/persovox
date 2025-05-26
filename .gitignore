@@ -1,0 +1,11 @@
+.vscode
+venv
+**/__pycache__
+**/tmp
+**/*schema.json
+**/*db
+**/.env
+**/.DS_Store
+config/*.py
+data/
+output/
