@@ -7,9 +7,12 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 
 
-def generate_resume_coverletter(job_description: str):
-    retriever = get_vectorstore().as_retriever(search_type="similarity", search_kwargs={"k": 10})
+def generate_resume_coverletter(job_description: str, user_id: str) -> str:
+    retriever = get_vectorstore().as_retriever(search_type="similarity", search_kwargs={"k": 10, "filter": {"user_id": user_id}})
     docs = retriever.get_relevant_documents(job_description)
+
+    if not docs:
+        raise ValueError(f"No relevant documents found for the job description and user '{user_id}'.")
 
     context = "\n\n".join([doc.page_content for doc in docs])
 
