@@ -48,32 +48,37 @@ def generate_resume_coverletter(job_description: str, user_id: str) -> str:
     resume = chain.run({"job_description": job_description, "context": context})
     # Optionally do the same for cover letter
 
-    return resume, "Cover letter coming soon..."
-    # for doc in docs:
-    #     print("\n--- Retrieved chunk ---\n")
-    #     print(doc.page_content)
+    # --- Cover Letter Prompt ---
+    cover_prompt = PromptTemplate(
+        input_variables=["job_description", "context"],
+        template=(
+            """
+            You are a professional career writer. Write a customized, concise, and compelling cover letter tailored to the provided job description using the user's prior experience below.
 
-    # llm = ChatOpenAI(model_name=OPENAI_MODEL, openai_api_key=OPENAI_API_KEY)
+            Guidelines:
+            - Highlight the user's most relevant experiences, skills, and accomplishments.
+            - Match tone and language to that of a professional job application.
+            - Do NOT repeat the resume.
+            - Begin with a strong introduction, a focused body, and a professional closing.
+            - DO NOT include filler like “insert name here” or “to whom it may concern”. Infer based on job description/context if necessary.
+            - Output ONLY the cover letter text.
 
-    # qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
-    
-    # resume_prompt = (
-    #     "Based ONLY on the user's resume data retrieved below, "
-    #     "generate a tailored resume for this job:\n\n"
-    #     f"JOB DESCRIPTION:\n{job_description}\n\n"
-    #     "USER RESUME DATA:\n{context}\n\n"
-    #     "Do NOT make up degrees, jobs, or skills. Only use what’s in the context."
-    # )    
-    
-    # cover_letter_prompt = (
-    #     "Based ONLY on the user's resume data retrieved below, "
-    #     "generate a tailored cover letter for this job:\n\n"
-    #     f"JOB DESCRIPTION:\n{job_description}\n\n"
-    #     "USER RESUME DATA:\n{context}\n\n"
-    #     "Do NOT make up degrees, jobs, or skills. Only use what’s in the context."
-    # )
+            JOB DESCRIPTION:
+            {job_description}
 
-    # tailored_resume = qa_chain.run(resume_prompt)
-    # cover_letter = qa_chain.run(cover_letter_prompt)
+            USER RESUME DATA:
+            {context}
 
-    # return tailored_resume, cover_letter
+            COVER LETTER:
+            """
+         )
+    )
+
+    cover_chain = LLMChain(
+        llm=ChatOpenAI(model_name="gpt-4o-mini", temperature=0.4),  # slightly more creative
+        prompt=cover_prompt
+    )
+
+    cover_letter = cover_chain.run({"job_description": job_description, "context": context})
+
+    return resume, cover_letter
