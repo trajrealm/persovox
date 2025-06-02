@@ -11,6 +11,7 @@ langchain-core>=0.1.35
 PyPDF2
 python-docx
 docx2txt
+pymupdf
 
 # Web scraping
 beautifulsoup4
@@ -29,3 +30,4 @@ gradio>=4.14.0
 # Misc
 pydantic
 dotenv
+

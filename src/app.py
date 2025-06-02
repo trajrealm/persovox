@@ -3,7 +3,7 @@ import gradio as gr
 from src.rag_engine.job_scraper import extract_job_description
 from src.rag_engine.rag_engine import generate_resume_coverletter
 from src.rag_engine.output_writer import write_output
-from src.rag_engine.resume_processor import index_resumes
+from src.rag_engine.resume_processor import index_resumes, index_user_json_resume
 from src.rag_engine.utils.file_saver import save_docx
 import gradio as gr
 from src.rag_engine.resume_generator import generate_resume
@@ -16,6 +16,7 @@ import os
 users = get_available_users()
 
 def generate_resume(job_url, user_id, output_format="docx"):
+    
     try:
         jd = extract_job_description(job_url)
         resume, cover = generate_resume_coverletter(jd, user_id=user_id)
@@ -32,9 +33,14 @@ def generate_resume(job_url, user_id, output_format="docx"):
         return f"Error: {str(e)}", None
 
 def process_and_generate_resume(user_id, job_link):
-    index_resumes(user_id)
+    index_user_json_resume(user_id)
     resume_text, cover_text, resume_file, cover_file = generate_resume(job_link, user_id=user_id)
     return resume_text, cover_text, resume_file, cover_file
+
+# def process_and_generate_resume(user_id, job_link):
+#     index_resumes(user_id)
+#     resume_text, cover_text, resume_file, cover_file = generate_resume(job_link, user_id=user_id)
+#     return resume_text, cover_text, resume_file, cover_file
 
 
 with gr.Blocks() as demo:

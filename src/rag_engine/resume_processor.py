@@ -1,9 +1,77 @@
 # resume_processor.py
 import os
 import glob
-from langchain.document_loaders import PyPDFLoader, DirectoryLoader
+import json
+from langchain.document_loaders import PyMuPDFLoader, DirectoryLoader
+from langchain_core.documents import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from src.rag_engine.chroma_store import get_vectorstore
+
+
+def load_merged_resume(user_id: str) -> list[Document]:
+    merged_path = f"data/{user_id}/resumes/parsed/merged.json"
+    if not os.path.exists(merged_path):
+        raise FileNotFoundError(f"Merged JSON not found for user {user_id}")
+
+    with open(merged_path, "r") as f:
+        resume_data = json.load(f)
+
+    # Turn structured JSON into plain text for RAG
+    text_blocks = []
+
+    personal_info = resume_data.get("personal_info", {})
+    contact_block = f"""Contact Information:
+    Name: {personal_info.get("name", "")}
+    Email: {personal_info.get("email", "")}
+    Phone: {personal_info.get("phone", "")}
+    Location: {personal_info.get("location", "")}
+    LinkedIn: {personal_info.get("linkedin", "")}
+    """
+    text_blocks.append(contact_block)
+
+    if resume_data.get("summary"):
+        text_blocks.append(f"Summary: {resume_data['summary']}")
+
+    for exp in resume_data.get("experiences", []):
+        block = f"""Experience:
+- Job Title: {exp.get('job_title')}
+- Company: {exp.get('company')}
+- Location: {exp.get('location')}
+- Duration: {exp.get('start_date')} to {exp.get('end_date')}
+- Description: {'; '.join(exp.get('description', []))}
+"""
+        text_blocks.append(block)
+
+    for edu in resume_data.get("education", []):
+        block = f"""Education:
+- Degree: {edu.get('degree')}
+- University: {edu.get('university')}
+- Location: {edu.get('location')}
+- Graduation Year: {edu.get('graduation_year')}
+"""
+        text_blocks.append(block)
+
+    skills = resume_data.get("skills", [])
+    if skills:
+        text_blocks.append(f"Skills: {', '.join(skills)}")
+
+    certs = resume_data.get("certifications", [])
+    if certs:
+        cert_block = "\n".join([f"- {c['name']} ({c.get('issuer', '')})" for c in certs])
+        text_blocks.append(f"Certifications:\n{cert_block}")
+
+    combined_text = "\n\n".join(text_blocks)
+
+    return [Document(page_content=combined_text, metadata={"user_id": user_id})]
+
+def index_user_json_resume(user_id: str):
+    docs = load_merged_resume(user_id)
+
+    splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    chunks = splitter.split_documents(docs)
+
+    db = get_vectorstore(user_id=user_id)
+    db.add_documents(chunks)
 
 def load_resumes(user_id, base_dir="data"):
     user_resume_path = os.path.join(base_dir, user_id, "resumes")
@@ -13,7 +81,7 @@ def load_resumes(user_id, base_dir="data"):
     pdf_files = glob.glob(user_resume_path+"/*", recursive=True)
     documents = []
     for pdf_file in pdf_files:
-        loader = PyPDFLoader(pdf_file)
+        loader = PyMuPDFLoader(pdf_file)
         docs = loader.load()
         for doc in docs:
             doc.metadata["doc_type"] = "resume"
@@ -23,7 +91,7 @@ def load_resumes(user_id, base_dir="data"):
 
 def index_resumes(user_id):
     documents = load_resumes(user_id)
-    splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=200, separators=["\n\n", "\n", " ", "", "."])
     docs = splitter.split_documents(documents)
     db = get_vectorstore()
     db.add_documents(docs)
