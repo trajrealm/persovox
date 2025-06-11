@@ -6,6 +6,8 @@ python-dotenv
 langchain>=0.1.15
 langchain-community>=0.0.33
 langchain-core>=0.1.35
+langchain-openai
+langchain-chroma
 
 # Document parsing
 PyPDF2
@@ -31,3 +33,5 @@ gradio>=4.14.0
 pydantic
 dotenv
 
+fastapi
+uvicorn

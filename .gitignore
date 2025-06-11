@@ -9,3 +9,7 @@ venv
 config/*.py
 data/
 output/
+node_modules/
+.next
+*.zip
+test/*

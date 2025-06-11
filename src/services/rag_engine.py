@@ -1,14 +1,14 @@
 # rag_engine.py
-from langchain.chains import RetrievalQA
-from langchain.chat_models import ChatOpenAI
 from config.config import OPENAI_API_KEY, OPENAI_MODEL
-from src.rag_engine.chroma_store import get_vectorstore
+from src.db.chroma_store import create_vectorstore
+
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-
+from langchain_community.callbacks.manager import get_openai_callback
 
 def generate_resume_coverletter(job_description: str, user_id: str) -> str:
-    retriever = get_vectorstore(user_id).as_retriever(search_type="mmr", search_kwargs={"k": 25}
+    retriever = create_vectorstore(user_id).as_retriever(search_type="mmr", search_kwargs={"k": 25}
     )
     docs = retriever.get_relevant_documents(job_description)
 
@@ -47,12 +47,20 @@ def generate_resume_coverletter(job_description: str, user_id: str) -> str:
         )
     )
 
-    chain = LLMChain(
-        llm=ChatOpenAI(model_name="gpt-4o-mini", temperature=0.3),
-        prompt=resume_template
-    )
+    with get_openai_callback() as cb1:
+        chain = LLMChain(
+            llm=ChatOpenAI(model_name="gpt-4o-mini", temperature=0.3),
+            prompt=resume_template
+        )
 
-    resume = chain.run({"job_description": job_description, "context": context})
+        resume = chain.run({"job_description": job_description, "context": context})
+
+    print(f"\n🧾 Token Usage:")
+    print(f"Prompt Tokens: {cb1.prompt_tokens}")
+    print(f"Completion Tokens: {cb1.completion_tokens}")
+    print(f"Total Tokens: {cb1.total_tokens}")
+    print(f"Estimated Cost: ${cb1.total_cost:.6f}")
+
     # Optionally do the same for cover letter
 
     # --- Cover Letter Prompt ---
@@ -85,11 +93,19 @@ def generate_resume_coverletter(job_description: str, user_id: str) -> str:
          )
     )
 
-    cover_chain = LLMChain(
-        llm=ChatOpenAI(model_name="gpt-4o-mini", temperature=0.4),  # slightly more creative
-        prompt=cover_prompt
-    )
+    with get_openai_callback() as cb2:
+        cover_chain = LLMChain(
+            llm=ChatOpenAI(model_name="gpt-4o-mini", temperature=0.4),  # slightly more creative
+            prompt=cover_prompt
+        )
 
-    cover_letter = cover_chain.run({"job_description": job_description, "context": context})
+        cover_letter = cover_chain.run({"job_description": job_description, "context": context})
+
+        print(f"\n🧾 Token Usage:")
+        print(f"Prompt Tokens: {cb2.prompt_tokens}")
+        print(f"Completion Tokens: {cb2.completion_tokens}")
+        print(f"Total Tokens: {cb2.total_tokens}")
+        print(f"Estimated Cost: ${cb2.total_cost:.6f}")
+
 
     return resume, cover_letter

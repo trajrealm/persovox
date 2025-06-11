@@ -1,11 +1,12 @@
 # resume_processor.py
+from src.db.chroma_store import create_vectorstore
+
 import os
 import glob
 import json
 from langchain.document_loaders import PyMuPDFLoader, DirectoryLoader
 from langchain_core.documents import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
-from src.rag_engine.chroma_store import get_vectorstore
 
 
 def load_merged_resume(user_id: str) -> list[Document]:
@@ -70,7 +71,7 @@ def index_user_json_resume(user_id: str):
     splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     chunks = splitter.split_documents(docs)
 
-    db = get_vectorstore(user_id=user_id)
+    db = create_vectorstore(user_id=user_id)
     db.add_documents(chunks)
 
 def load_resumes(user_id, base_dir="data"):
@@ -93,5 +94,5 @@ def index_resumes(user_id):
     documents = load_resumes(user_id)
     splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=200, separators=["\n\n", "\n", " ", "", "."])
     docs = splitter.split_documents(documents)
-    db = get_vectorstore()
+    db = create_vectorstore()
     db.add_documents(docs)
