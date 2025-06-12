@@ -35,3 +35,8 @@ dotenv
 
 fastapi
 uvicorn
+psycopg2-binary==2.9.5
+sqlalchemy
+passlib[bcrypt]
+pydantic[email]
+

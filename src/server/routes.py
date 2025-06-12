@@ -9,7 +9,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
+from src.services import auth_service
+from src.db.models import User
+from src.db.database import SessionLocal, Base, engine
 
+from sqlalchemy.orm import Session
+from fastapi import Depends, HTTPException, status
+from pydantic import EmailStr
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,6 +29,49 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+# Create tables
+Base.metadata.create_all(bind=engine)
+
+# Dependency for DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Request/response schemas
+class SignupRequest(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: EmailStr
+
+    class Config:
+        orm_mode = True
+
+# Routes for signup/login
+@app.post("/signup", response_model=UserResponse)
+def signup(data: SignupRequest, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.email == data.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return auth_service.create_user(db, data.username, data.email, data.password)
+
+@app.post("/login", response_model=UserResponse)
+def login(data: LoginRequest, db: Session = Depends(get_db)):
+    user = auth_service.authenticate_user(db, data.email, data.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return user
 
 class GenRequest(BaseModel):
     user: str

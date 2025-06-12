@@ -21,29 +21,46 @@ import {
   CircularProgress,
   Stack,
   Paper,
+  Avatar,
+  Menu,
+  IconButton
 } from '@mui/material';
+
+import { useRouter } from 'next/router';
+import { useNavigate } from "react-router-dom";
+import AccountCircle from "@mui/icons-material/AccountCircle";
+
 
 const BACKEND_URL = 'http://localhost:8000'; // Change if needed
 
 const ResumeGenerator = () => {
-  const [users, setUsers] = useState<string[]>([]);
-  const [selectedUser, setSelectedUser] = useState('');
+  const [users, setUser] = useState< {username: string; email: string} | null> (null);
   const [jobLink, setJobLink] = useState('');
   const [jobText, setJobText] = useState('');
   const [resume, setResume] = useState('');
   const [coverLetter, setCoverLetter] = useState('');
   const [loading, setLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
+  const router = useRouter();
+  const [userInfo, setUserInfo] = useState<{ username: string; email: string } | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
-    axios.get(`${BACKEND_URL}/users`).then(res => setUsers(res.data.users));
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      // Redirect to login in production only
+      if (process.env.NODE_ENV === "production") router.push("/login");
+    } else {
+      setUserInfo(JSON.parse(storedUser));
+    }
   }, []);
 
   const handleGenerate = async () => {
+    if (!userInfo) return;
     setLoading(true);
     try {
       const response = await axios.post(`${BACKEND_URL}/generate`, {
-        user: selectedUser,
+        user: userInfo.username,  // using the logged-in user
         job_link: jobLink,
         job_text: jobText,
       });
@@ -55,7 +72,7 @@ const ResumeGenerator = () => {
     }
     setLoading(false);
   };
-
+  
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <CssBaseline />
@@ -71,6 +88,30 @@ const ResumeGenerator = () => {
             <Button href="/about" sx={{ color: '#fff', mx: 1 }}>About</Button>
             <Button href="/contact" sx={{ color: '#fff', mx: 1 }}>Contact</Button>
           </Box>
+          {userInfo && (
+            <>
+              <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ ml: 2 }} color="inherit">
+                <AccountCircle />
+              </IconButton>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={() => setAnchorEl(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              >
+                <MenuItem disabled>
+                  <strong>{userInfo.username}</strong>
+                </MenuItem>
+                <MenuItem disabled>{userInfo.email}</MenuItem>
+                <MenuItem onClick={() => {
+                  localStorage.removeItem("user");
+                  router.push("/login_signup");
+                }}>
+                  Logout
+                </MenuItem>
+              </Menu>
+            </>
+          )}          
         </Toolbar>
       </AppBar>
 
@@ -81,25 +122,6 @@ const ResumeGenerator = () => {
             <Typography variant="h4" textAlign="center" gutterBottom fontWeight={600}>
               Resume & Cover Letter Generator
             </Typography>
-
-            <FormControl fullWidth required>
-              <InputLabel id="select-user-label">Select User</InputLabel>
-              <Select
-                labelId="select-user-label"
-                value={selectedUser}
-                label="Select User"
-                onChange={e => setSelectedUser(e.target.value)}
-              >
-                <MenuItem value="">
-                  <em>-- Choose User --</em>
-                </MenuItem>
-                {users.map(user => (
-                  <MenuItem key={user} value={user}>
-                    {user}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
 
             <TextField
               fullWidth
@@ -123,7 +145,7 @@ const ResumeGenerator = () => {
               variant="contained"
               color="primary"
               onClick={handleGenerate}
-              disabled={!selectedUser || loading}
+              disabled={loading}
               startIcon={loading ? <CircularProgress size={20} /> : null}
               sx={{ alignSelf: 'start' }}
             >
