@@ -1,12 +1,15 @@
 # resume_processor.py
-from src.db.chroma_store import create_vectorstore
+from src.db.chroma_store import create_vectorstore, recreate_vectorstore
+from src.services.resume_parser import batch_parse_resumes
+from src.services.resume_merger import create_merged_json
 
 import os
 import glob
 import json
-from langchain.document_loaders import PyMuPDFLoader, DirectoryLoader
+from langchain_community.document_loaders import PyMuPDFLoader, DirectoryLoader
 from langchain_core.documents import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
+
 
 
 def load_merged_resume(user_id: str) -> list[Document]:
@@ -65,14 +68,16 @@ def load_merged_resume(user_id: str) -> list[Document]:
 
     return [Document(page_content=combined_text, metadata={"user_id": user_id})]
 
-def index_user_json_resume(user_id: str):
+
+def index_user_json_resume(user_id: str, reindex=False):
     docs = load_merged_resume(user_id)
 
     splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     chunks = splitter.split_documents(docs)
+    db = create_vectorstore(user_id=user_id) if not reindex else recreate_vectorstore(username=user_id)
 
-    db = create_vectorstore(user_id=user_id)
     db.add_documents(chunks)
+
 
 def load_resumes(user_id, base_dir="data"):
     user_resume_path = os.path.join(base_dir, user_id, "resumes")
@@ -96,3 +101,24 @@ def index_resumes(user_id):
     docs = splitter.split_documents(documents)
     db = create_vectorstore()
     db.add_documents(docs)
+
+
+def regenerate_kb(username: str, files: list):
+    print(f"Regenerating knowledge base for user: {username} and files: {files}")
+    batch_parse_resumes(f"./data/{username}/resumes", f"./data/{username}/resumes/parsed", files)
+    create_merged_json(username, files)
+    index_user_json_resume(username, reindex=True)
+
+
+import sys
+if __name__ == "__main__":
+    username = sys.argv[1]
+    files = sys.argv[2]
+    print("I am files_json ===> :", files)
+    # files = json.loads(files_json)
+    # print("I am files loads: ", files)
+    regenerate_kb(username, files)
+    print("✅ Regeneration completed.")
+
+
+    # index_user_json_resume("triloke")

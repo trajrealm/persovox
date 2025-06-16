@@ -72,11 +72,13 @@ Resume Text:
         print(f"Error parsing LLM response: {e}")
         return {}
 
-def batch_parse_resumes(input_folder, output_folder):
+def batch_parse_resumes(input_folder, output_folder, filter_files=None):
     os.makedirs(output_folder, exist_ok=True)
     pdf_files = list(Path(input_folder).glob("*.pdf"))
-    
+    print("batch_parse_resume ", type(filter_files),  filter_files)
     for pdf in pdf_files:
+        if os.path.basename(pdf) not in filter_files:
+            continue
         print(f"Processing: {pdf.name}")
         text = extract_text_from_pdf(str(pdf))
         structured = parse_resume_to_json(text)

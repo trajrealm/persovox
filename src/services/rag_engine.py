@@ -8,8 +8,8 @@ from langchain.prompts import PromptTemplate
 from langchain_community.callbacks.manager import get_openai_callback
 
 def generate_resume_coverletter(job_description: str, user_id: str) -> str:
-    retriever = create_vectorstore(user_id).as_retriever(search_type="mmr", search_kwargs={"k": 25}
-    )
+    retriever = create_vectorstore(user_id).as_retriever(search_type="mmr", search_kwargs={"k": 25})
+    
     docs = retriever.get_relevant_documents(job_description)
 
     if not docs:

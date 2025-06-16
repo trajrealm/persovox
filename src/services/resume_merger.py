@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
+import os
 
-def merge_resume_jsons(json_folder: str) -> dict:
+def merge_resume_jsons(json_folder: str, filter_files: list) -> dict:
     merged = {
         "personal_info": {
         "name": None,
@@ -22,9 +23,13 @@ def merge_resume_jsons(json_folder: str) -> dict:
     seen_edu = set()
     seen_cert = set()
 
-    json_files = list(Path(json_folder).glob("*.json"))
+    json_files = [f for f in Path(json_folder).glob("*.json") if f.name != "merged.json"]
 
     for jf in json_files:
+        jf_name = os.path.splitext(jf)[0]
+        if any(os.path.splitext(ff)[0] == jf_name for ff in filter_files):
+            continue
+        
         with open(jf, "r") as f:
             j = json.load(f)
 
@@ -65,8 +70,14 @@ def merge_resume_jsons(json_folder: str) -> dict:
     return merged
 
 
+def create_merged_json(username: str, filter_files: list = None):
+    merged_data = merge_resume_jsons(f"data/{username}/resumes/parsed", filter_files)
+    with open(f"data/{username}/resumes/parsed/merged.json", "w") as f:
+        json.dump(merged_data, f, indent=2)
+
 if __name__ == "__main__":
-    for user in ["triloke", "qureena"]:
-        merged_data = merge_resume_jsons(f"data/{user}/resumes/parsed")
-        with open(f"data/{user}/resumes/parsed/merged.json", "w") as f:
-            json.dump(merged_data, f, indent=2)
+    create_merged_json("triloke", [" Resume - Triloke Rajbhandary .pdf"])
+    # for user in ["triloke", "qureena"]:
+    #     merged_data = merge_resume_jsons(f"data/{user}/resumes/parsed")
+    #     with open(f"data/{user}/resumes/parsed/merged.json", "w") as f:
+    #         json.dump(merged_data, f, indent=2)
