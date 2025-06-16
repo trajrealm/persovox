@@ -52,7 +52,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
     try {
       await uploadResume(userInfo.username, file);
-      const resumes = await (await import('../utils/api')).fetchResumes(userInfo.username);
+      const resumes = await (await import('../../utils/api')).fetchResumes(userInfo.username);
       setUploadedResumes(resumes);
     } catch (err) {
       console.error(err);
@@ -81,7 +81,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     if (!userInfo || !window.confirm(`Are you sure you want to delete "${filename}"?`)) return;
     try {
       await deleteResume(userInfo.username, filename);
-      const resumes = await (await import('../utils/api')).fetchResumes(userInfo.username);
+      const resumes = await (await import('../../utils/api')).fetchResumes(userInfo.username);
       setUploadedResumes(resumes);
     } catch (error) {
       console.error(error);
