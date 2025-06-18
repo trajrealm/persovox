@@ -10,6 +10,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH")
 RESUME_DIR = os.getenv("RESUME_DIR")
+OPENAI_EMBED_MODEL_NAME = os.getenv("OPENAI_EMBED_MODEL_NAME")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL")  # or "gpt-4o-mini"
 # EMBEDDING_MODEL = "openai"  # or "local"
-# OPENAI_EMBED_MODEL_NAME = "text-embedding-3-small"
 # OPENAI_MODEL = "gpt-4o-mini"  # or "gpt-4o-mini"
