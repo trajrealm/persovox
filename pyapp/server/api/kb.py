@@ -8,8 +8,8 @@ import sys
 import traceback
 import json
 
-from src.db.models import UserResumeSelections
-from src.db.database import get_db
+from pyapp.db.models import UserResumeSelections
+from pyapp.db.database import get_db
 
 router = APIRouter()
 

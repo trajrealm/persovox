@@ -1,6 +1,6 @@
 # rag_engine.py
 from config.config import OPENAI_API_KEY, OPENAI_MODEL
-from src.db.chroma_store import create_vectorstore
+from pyapp.db.chroma_store import create_vectorstore
 
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import LLMChain

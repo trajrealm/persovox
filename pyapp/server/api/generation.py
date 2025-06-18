@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from src.services.job_scraper import extract_job_description
-from src.services.rag_engine import generate_resume_coverletter
+from pyapp.services.job_scraper import extract_job_description
+from pyapp.services.rag_engine import generate_resume_coverletter
 
 router = APIRouter()
 

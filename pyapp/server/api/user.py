@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from src.db.vectorstore_singleton import get_all_vectorstore_users
+from pyapp.db.vectorstore_singleton import get_all_vectorstore_users
 
 router = APIRouter()
 

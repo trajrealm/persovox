@@ -1,7 +1,7 @@
 # resume_processor.py
-from src.db.chroma_store import create_vectorstore, recreate_vectorstore
-from src.services.resume_parser import batch_parse_resumes
-from src.services.resume_merger import create_merged_json
+from pyapp.db.chroma_store import create_vectorstore, recreate_vectorstore
+from pyapp.services.resume_parser import batch_parse_resumes
+from pyapp.services.resume_merger import create_merged_json
 
 import os
 import glob

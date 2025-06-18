@@ -1,12 +1,12 @@
 # app.py
-from src.services.job_scraper import extract_job_description
-from src.services.rag_engine import generate_resume_coverletter
-from src.services.output_writer import write_output
-from src.services.resume_processor import index_resumes, index_user_json_resume
-from src.utils.file_saver import save_docx
-from src.services.resume_generator import generate_resume
-from src.utils.formatting import style_resume_for_display
-from src.utils.user_utils import get_available_users
+from pyapp.services.job_scraper import extract_job_description
+from pyapp.services.rag_engine import generate_resume_coverletter
+from pyapp.services.output_writer import write_output
+from pyapp.services.resume_processor import index_resumes, index_user_json_resume
+from pyapp.utils.file_saver import save_docx
+from pyapp.services.resume_generator import generate_resume
+from pyapp.utils.formatting import style_resume_for_display
+from pyapp.utils.user_utils import get_available_users
 
 import gradio as gr
 
