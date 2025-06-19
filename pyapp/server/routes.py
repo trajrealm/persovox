@@ -1,13 +1,20 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from fastapi import FastAPI
+import traceback
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from sqlalchemy.orm import Session
 
+from pyapp.utils.regenerate_kb import run_regenerate_kb
 from pyapp.utils.user_utils import get_available_users
 from pyapp.services.resume_processor import index_user_json_resume
 from pyapp.db.database import Base, engine
+from pyapp.db.database import get_db
+from pyapp.db.models import UserResumeSelections, User
+
+
+
 
 from pyapp.server.api.auth import router as auth_router
 from pyapp.server.api.resume import router as resume_router
@@ -17,10 +24,21 @@ from pyapp.server.api.user import router as user_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    users = get_available_users()
-    print(f"Available users: {users}")
-    for user in users:
-        index_user_json_resume(user)
+    db_gen = get_db()  # get generator
+    db = next(db_gen)  # get Session instance
+    try:
+        users = db.query(User).all()
+        print("Available users:", users)
+        for user in users:
+            selections = db.query(UserResumeSelections.resume_filename).filter(
+                UserResumeSelections.username == user.username,
+                UserResumeSelections.selected == True
+            ).all()
+            run_regenerate_kb(user.username, [s[0] for s in selections])
+    except:
+        traceback.print_exc()
+    finally:
+        db_gen.close()  # clean up session
     yield
 
 app = FastAPI(lifespan=lifespan)

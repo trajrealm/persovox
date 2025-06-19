@@ -40,3 +40,4 @@ sqlalchemy
 passlib[bcrypt]
 pydantic[email]
 
+supabase

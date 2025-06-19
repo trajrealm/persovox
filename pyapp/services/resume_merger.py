@@ -1,6 +1,8 @@
+from config.config import RESUME_DIR, LOCAL_DWNLD_DIR
 import json
 from pathlib import Path
 import os
+
 
 def merge_resume_jsons(json_folder: str, filter_files: list) -> dict:
     merged = {
@@ -71,8 +73,8 @@ def merge_resume_jsons(json_folder: str, filter_files: list) -> dict:
 
 
 def create_merged_json(username: str, filter_files: list = None):
-    merged_data = merge_resume_jsons(f"data/{username}/resumes/parsed", filter_files)
-    with open(f"data/{username}/resumes/parsed/merged.json", "w") as f:
+    merged_data = merge_resume_jsons(f"{LOCAL_DWNLD_DIR}/{username}/{RESUME_DIR}/parsed", filter_files)
+    with open(f"{LOCAL_DWNLD_DIR}/{username}/{RESUME_DIR}/parsed/merged.json", "w") as f:
         json.dump(merged_data, f, indent=2)
 
 if __name__ == "__main__":

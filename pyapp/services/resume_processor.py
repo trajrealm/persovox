@@ -2,14 +2,17 @@
 from pyapp.db.chroma_store import create_vectorstore, recreate_vectorstore
 from pyapp.services.resume_parser import batch_parse_resumes
 from pyapp.services.resume_merger import create_merged_json
+from config.config import SUPABASE_URL, SUPABASE_KEY, BUCKET_NAME, LOCAL_DWNLD_DIR, RESUME_DIR
 
+import ast
 import os
 import glob
 import json
+import sys
 from langchain_community.document_loaders import PyMuPDFLoader, DirectoryLoader
 from langchain_core.documents import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
-
+from supabase import create_client, Client
 
 
 def load_merged_resume(user_id: str) -> list[Document]:
@@ -103,11 +106,30 @@ def index_resumes(user_id):
     db.add_documents(docs)
 
 
+def download_resumes(username: str, files: str):
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    print(f"files are: {files}, {type(files)}")
+    file_list = ast.literal_eval(files)
+    user_dir = f"{LOCAL_DWNLD_DIR}/{username}/{RESUME_DIR}" 
+    
+    if not os.path.exists(user_dir):
+        os.makedirs(user_dir, exist_ok=True)
+
+    for filename in file_list:
+        file_path = f"{RESUME_DIR}/{username}/{filename}"
+        print(f"Downloading file: {file_path}")
+        with open(f"{LOCAL_DWNLD_DIR}/{username}/{RESUME_DIR}/{filename}", "wb+") as f:
+            response = supabase.storage.from_(BUCKET_NAME).download(file_path)
+            f.write(response)
+
+
 def regenerate_kb(username: str, files: list):
     print(f"Regenerating knowledge base for user: {username} and files: {files}")
-    batch_parse_resumes(f"./data/{username}/resumes", f"./data/{username}/resumes/parsed", files)
+    download_resumes(username, files)
+    batch_parse_resumes(f"{LOCAL_DWNLD_DIR}/{username}/{RESUME_DIR}", f"{LOCAL_DWNLD_DIR}/{username}/{RESUME_DIR}/parsed", files)
     create_merged_json(username, files)
     index_user_json_resume(username, reindex=True)
+
 
 
 import sys
@@ -115,10 +137,5 @@ if __name__ == "__main__":
     username = sys.argv[1]
     files = sys.argv[2]
     print("I am files_json ===> :", files)
-    # files = json.loads(files_json)
-    # print("I am files loads: ", files)
     regenerate_kb(username, files)
     print("✅ Regeneration completed.")
-
-
-    # index_user_json_resume("triloke")
