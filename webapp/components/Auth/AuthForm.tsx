@@ -52,7 +52,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess }) => {
         setError(errData.detail || "Authentication failed.");
       }
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError(`Network error. Please try again. : ${err}`);
     }
   };
 
