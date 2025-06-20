@@ -3,7 +3,7 @@ import { Box, Button, TextField, Typography } from "@mui/material";
 
 type AuthMode = "login" | "signup";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 interface AuthFormProps {
   mode: AuthMode;
   onSuccess: (email: string, username: string) => void;
