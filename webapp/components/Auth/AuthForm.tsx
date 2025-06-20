@@ -3,6 +3,7 @@ import { Box, Button, TextField, Typography } from "@mui/material";
 
 type AuthMode = "login" | "signup";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 interface AuthFormProps {
   mode: AuthMode;
   onSuccess: (email: string, username: string) => void;
@@ -30,8 +31,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess }) => {
       }
 
       const url = mode === "signup"
-        ? "http://localhost:8000/signup"
-        : "http://localhost:8000/login";
+        ? `${BACKEND_URL}/signup`
+        : `${BACKEND_URL}/login`;
 
       const payload = mode === "signup"
         ? { username, email, password }
